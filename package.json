@@ -1,0 +1,16 @@
+{
+  "name": "devstack-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remote MCP connector for DevStack API — one keyless, normalized view of the whole developer registry across npm, PyPI, Docker Hub, and the VS Code Marketplace (search, package details, versions, download/pull stats) plus resolved dependency graphs (deps.dev), per-version vulnerabilities (OSV.dev), OSSF Scorecard insights, and cross-registry lookups over 50+ ecosystems (ecosyste.ms) — exposed as MCP tools for Claude/ChatGPT/any MCP client. The wrapped data is public developer-registry metadata with zero per-user state.",
+  "type": "module",
+  "main": "api/mcp.js",
+  "scripts": {
+    "dev": "node local-server.js",
+    "smoke": "node test/smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  }
+}
