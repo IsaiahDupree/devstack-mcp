@@ -1,12 +1,13 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.IsaiahDupree/devstack-mcp",
-  "description": "Remote MCP connector for developer-registry data via DevStack API — npm/PyPI/Docker/VS Code packages, dependency graphs, vulnerabilities, and 50+ ecosystems. No auth required.",
+  "description": "Remote MCP connector for developer-registry data via DevStack API \u2014 npm/PyPI/Docker/VS Code packages, dependency graphs, vulnerabilities, and 50+ ecosystems. No auth required.",
   "version": "1.0.0",
   "websiteUrl": "https://devstack-mcp.vercel.app",
   "repository": {
     "url": "https://github.com/IsaiahDupree/devstack-mcp",
-    "source": "github"
+    "source": "github",
+    "id": "1318902117"
   },
   "remotes": [
     {
