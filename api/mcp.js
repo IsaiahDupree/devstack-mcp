@@ -1,17 +1,14 @@
-// api/mcp.js — the MCP endpoint. DevStack's data (npm / PyPI / Docker Hub / VS Code
-// package metadata, dependency graphs, vulnerabilities, cross-registry lookups) is
-// public developer-registry information and carries no per-user state, so this
-// connector deliberately has NO auth, NO sessions, NO Supabase, NO billing, NO
-// demo-vs-real split: every caller gets the same real, live data.
-// See README.md for the full rationale.
-//
-// Stateless streamable-HTTP MCP server, one instance per request (no session
-// affinity needed since there is no per-session state to keep).
-
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { registerTools } from '../lib/tools.js';
 import { clientIp, checkAndConsume } from '../lib/ratelimit.js';
+import { createHash, timingSafeEqual } from 'node:crypto';
+
+function authorized(req, secret) {
+  const value = /^Bearer\s+(.+)$/i.exec(req.headers.authorization || '')?.[1] || '';
+  const digest = s => createHash('sha256').update(s).digest();
+  return value.length > 0 && timingSafeEqual(digest(value), digest(secret));
+}
 
 export default async function handler(req, res) {
   // Streamable-HTTP stateless servers only accept POST; GET/SSE-resume and
@@ -29,6 +26,13 @@ export default async function handler(req, res) {
       error: { code: -32000, message: 'Method not allowed' },
       id: null,
     });
+  }
+
+  const secret = process.env.DEVSTACK_MCP_CLIENT_TOKEN || '';
+  if (Buffer.byteLength(secret, 'utf8') < 32) return res.status(503).json({ error: { code: 'auth_not_configured', message: 'MCP access is not configured.' } });
+  if (!authorized(req, secret)) {
+    res.setHeader('WWW-Authenticate', 'Bearer');
+    return res.status(401).json({ error: { code: 'unauthorized', message: 'Valid bearer token required.' } });
   }
 
   // Only tools/call actually reaches the metered upstream (initialize/tools/list

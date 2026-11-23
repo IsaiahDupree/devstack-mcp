@@ -1,21 +1,4 @@
-// test/smoke.mjs — real end-to-end smoke test against a locally-running
-// local-server.js (which serves the exact same api/mcp.js Vercel handler).
-// No mocks: initialize, tools/list, and a live tools/call all go over real
-// HTTP/JSON-RPC to a real MCP server instance, which in turn fetches real data
-// from DEVSTACK_MCP_API_BASE_URL.
-//
-// Usage:
-//   node local-server.js &            # in one terminal
-//   node test/smoke.mjs               # in another
-//
-// The live tools/call hits the upstream DevStack API. Against production that
-// requires DEVSTACK_MCP_PROXY_SECRET (the RapidAPI proxy-secret guard); against a
-// locally self-hosted devstack-api with no RAPIDAPI_PROXY_SECRET set the guard is
-// inert and real data flows keyless. Point DEVSTACK_MCP_API_BASE_URL at whichever
-// you're testing. If the upstream guard rejects the call (no secret configured),
-// the test still verifies the full MCP protocol plumbing and reports it explicitly
-// instead of hard-failing.
-
+// Real local HTTP protocol smoke test; live lookup is opt-in and may incur costs.
 const BASE = process.env.SMOKE_BASE_URL || 'http://localhost:3900';
 
 let idCounter = 1;
@@ -26,6 +9,7 @@ async function rpc(method, params) {
     headers: {
       'content-type': 'application/json',
       accept: 'application/json, text/event-stream',
+      authorization: `Bearer ${process.env.DEVSTACK_MCP_CLIENT_TOKEN || ''}`,
     },
     body: JSON.stringify(body),
   });
@@ -77,6 +61,11 @@ async function main() {
   if (!pkgTool) throw new Error('get_package tool missing');
   console.log('\nget_package inputSchema:');
   console.log(JSON.stringify(pkgTool.inputSchema, null, 2));
+
+  if (process.env.SMOKE_ALLOW_REAL_LOOKUP !== '1') {
+    console.log('Skipping live lookup; set SMOKE_ALLOW_REAL_LOOKUP=1 only for an authorized workload.');
+    return;
+  }
 
   // 4. tools/call get_package with a real query
   const call = await rpc('tools/call', {
